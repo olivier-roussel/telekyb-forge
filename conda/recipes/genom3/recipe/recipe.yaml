@@ -1,0 +1,49 @@
+context:
+  name: genom3
+  version: 2.99.46
+  build_num: 0
+
+package:
+  name: ${{ name }}
+  version: ${{ version }}
+
+source:
+  # TODO: prefer using url + sha256, it's much faster & safer
+  url: https://www.openrobots.org/distfiles/genom/genom-${{ version }}.tar.gz
+  sha256: 89140cb22e6172119b48135a50df704b06ba64712c73961ab7348d2b14481138
+  # git: https://git.openrobots.org/robots/genom3.git
+  # tag: genom3-${{ version }}
+
+build:
+  number: ${{ build_num }}
+
+requirements:
+  build:
+    - ${{ compiler('cxx') }}
+    - ${{ stdlib('c') }}
+    - autoconf
+    - automake
+    - libtool
+    - make
+    - pkg-config
+    - flex
+    - bison
+  host:
+    - tcllib
+  run_exports:
+    - ${{ pin_subpackage(name, upper_bound='x.x.x') }}
+
+# TODO
+# tests:
+#   - package_contents:
+
+about:
+  homepage: https://git.openrobots.org/projects/genom3
+  summary: The Generator of Modules (GenoM) is a tool to design real-time software architectures.
+  license: BSD-2-Clause
+  license_file: LICENSE
+  repository: https://git.openrobots.org/projects/genom3
+
+extra:
+  recipe-maintainers:
+    - olivier-roussel

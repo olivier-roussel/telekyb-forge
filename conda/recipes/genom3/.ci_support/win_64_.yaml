@@ -1,0 +1,4 @@
+c_stdlib:
+- vs
+cxx_compiler:
+- vs2022
