@@ -1,0 +1,27 @@
+name: rerender-all-packages
+
+on:
+  workflow_dispatch:
+  # TODO this workflow should be cron-ed to test regularly if re-rendering is needed
+  # (frequency depends on number of package dependencies that may have their pinning updated
+  # on conda-forge)
+  # schedule:
+  #   - cron: 0 5 * * 0
+
+jobs:
+  rerender-genom3:
+    uses: ./.github/workflows/rerender-package.yml
+    with:
+      package: genom3
+      requires-prs: ""
+    secrets: inherit
+  # Example to re-render another package fooA that depends on genom3 and fooB for example
+  # rerender-fooA:
+  #   needs: [rerender-genom3, rerender-fooB]
+  #   uses: ./.github/workflows/rerender-package.yml
+  #   with:
+  #     package: fooA
+  #     requires-prs: |
+  #       ${{ needs.rerender-genom3.outputs.pr-number }} 
+  #       ${{ needs.rerender-fooB.outputs.pr-number }}
+  #   secrets: inherit

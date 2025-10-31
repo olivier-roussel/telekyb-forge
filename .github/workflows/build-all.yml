@@ -1,0 +1,12 @@
+name: build-all-packages
+on:
+  workflow_dispatch:
+
+jobs:
+  build-publish-genom3:
+    uses: ./.github/workflows/build-genom3.yml
+    secrets: inherit
+  # build-publish-fooA:
+  #   uses: ./.github/workflows/build-fooA.yml
+  #   needs: [build-publish-genom3, build-publish-fooB]
+  #   secrets: inherit

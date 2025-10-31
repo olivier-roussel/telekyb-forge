@@ -1,0 +1,110 @@
+name: common-build-publish-package
+
+on:
+  workflow_call:
+    inputs:
+      package-name:
+        required: true
+        type: string
+      runner:
+        required: true
+        type: string
+      platform:
+        required: true
+        type: string        
+      python:
+        required: false
+        type: string
+      channel:
+        required: true
+        type: string
+    secrets:
+      api-key:
+        required: true
+
+jobs:
+  build-publish-sofa:
+    name: "${{ inputs.package-name }} - ${{ inputs.platform }} (py${{ inputs.python }} ) conda packages on ${{ inputs.runner }}"
+    runs-on: ${{ inputs.runner }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install miniconda [Linux x64 & macOS]
+      if: "!(contains(inputs.runner, 'ubuntu') && contains(inputs.runner, 'arm'))"
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        activate-environment: conda-ci
+        auto-update-conda: true
+        miniforge-version: latest
+        conda-remove-defaults: "true"
+
+    - name: Install miniconda [Linux aarch64]
+      if: contains(inputs.runner, 'ubuntu') && contains(inputs.runner, 'arm')
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        activate-environment: conda-ci
+        auto-update-conda: true
+        miniforge-version: latest
+        architecture: aarch64
+        conda-remove-defaults: "true"
+
+    - name: Install conda environment
+      shell: bash -l {0}
+      run: |
+        conda install rattler-build -c conda-forge
+
+    - name: Setup output directory
+      shell: bash -l {0}
+      run: |
+        echo "PKG_DIR=$CONDA_PREFIX/rattler-bld" >> $GITHUB_ENV
+
+    - name: Show conda config
+      shell: bash -l {0}
+      run: |
+        conda info
+        conda list
+        conda config --show-sources
+        conda config --show
+        printenv | sort
+
+    - name: Build conda package
+      shell: bash -l {0}
+      run: |
+        conda info
+        cd conda/recipes
+        # remap given platform to config filename conda-forge standard
+        CONFIG_FILE_SPEC=`echo  ${{ inputs.platform }} | sed 's/-/_/g'`_
+        if [ ! -z "${{ inputs.python }}" ]; then
+          CONFIG_FILE_SPEC=${CONFIG_FILE_SPEC}python${{ inputs.python }}
+          echo "Config file spec: $CONFIG_FILE_SPEC for platform: ${{ inputs.platform }} (with python ${{ inputs.python }})"
+        else
+          echo "Config file spec: $CONFIG_FILE_SPEC for platform: ${{ inputs.platform }} (no python)"
+        fi
+        CONFIG_FILE=`find ${{ inputs.package-name }}/.ci_support -name "$CONFIG_FILE_SPEC*"`
+        if [ -z "$CONFIG_FILE" ] ; then
+          echo "Could not find configuration matching specs $CONFIG_FILE_SPEC for ${{ inputs.package-name }}"
+          echo "It is likely some platform / python-version combination specified in the feedstock parent workflow is deprecated and not anymore supported by conda-forge"
+          echo "Here is the list of available configuration files for the feedstock ${{ inputs.package-name }}:"
+          echo `ls -l ${{ inputs.package-name }}/.ci_support`
+          exit 1
+        fi
+        echo "Config file used for building package: $CONFIG_FILE"
+        rattler-build build --recipe ${{ inputs.package-name }}/recipe/recipe.yaml --variant-config $CONFIG_FILE --output-dir ${{ env.PKG_DIR }} --experimental -c conda-forge -c https://prefix.dev/${{ inputs.channel }} --channel-priority disabled
+
+    # Remove already existing package if any
+    # - name: Remove existing package
+    #   shell: bash -l {0}
+    #   run: |
+    #     cd ${{ env.PKG_DIR }}/${{ inputs.platform }}
+    #     for file in *${{ inputs.package-name }}*.conda; do
+    #       curl -X DELETE https://prefix.dev/api/v1/delete/${{ inputs.channel }}/${{ inputs.platform }}/$file -H "Authorization: Bearer ${{ secrets.api-key }}"
+    #     done
+
+    # - name: Publish conda package
+    #   shell: bash -l {0}
+    #   run: |
+    #     for file in ${{ env.PKG_DIR }}/**/*${{ inputs.package-name }}*.conda; do
+    #       rattler-build upload prefix -c ${{ inputs.channel }} --api-key ${{ secrets.api-key }} "$file"
+    #     done
