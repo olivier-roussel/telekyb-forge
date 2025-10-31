@@ -1,0 +1,40 @@
+context:
+  name: openrobots2-idl
+  version: 2.3.2
+  build_num: 0
+
+package:
+  name: ${{ name }}
+  version: ${{ version }}
+
+source:
+  url: https://www.openrobots.org/distfiles/openrobots-idl/openrobots2-idl-${{ version }}.tar.gz
+  sha256: 878a89f2c45f03a6e8039a8b54f67213d1419ebf85655b0a92bee0c5a4793549
+
+build:
+  number: ${{ build_num }}
+
+requirements:
+  build:
+    - autoconf
+    - automake
+    - make
+    - pkg-config
+  run_exports:
+    - ${{ pin_subpackage(name, upper_bound='x.x.x') }}
+
+tests:
+  - package_contents:
+      files:
+        - lib/pkgconfig/openrobots2-idl.pc
+        - share/idl/openrobots2-idl/or/robot/rotorcraft.gen
+
+about:
+  homepage: http://robotpkg.openrobots.org/robotpkg/interfaces/openrobots2-idl/index.html
+  summary: Common IDL interfaces for genom3 components.
+  license: ISC
+  license_file: LICENSE
+  repository: https://git.openrobots.org/projects/openrobots-idl
+extra:
+  recipe-maintainers:
+    - olivier-roussel
