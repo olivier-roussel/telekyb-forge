@@ -45,7 +45,7 @@ tests:
         - lib/pkgconfig/genom3-c-client.pc
 
 about:
-  homepage: https://git.openrobots.org/projects/genom3
+  homepage: http://robotpkg.openrobots.org/robotpkg/architecture/genom3/index.html
   summary: The Generator of Modules (GenoM) is a tool to design real-time software architectures.
   license: BSD-2-Clause
   license_file: LICENSE
